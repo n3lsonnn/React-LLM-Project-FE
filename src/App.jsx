@@ -4,14 +4,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
-
-function ChatPlaceholder() {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <h1 className="text-2xl font-bold text-gray-900">Chat — coming Day 8</h1>
-    </div>
-  )
-}
+import ChatPage from './pages/ChatPage'
 
 function App() {
   return (
@@ -32,7 +25,7 @@ function App() {
             path="/chat/:uuid"
             element={
               <ProtectedRoute>
-                <ChatPlaceholder />
+                <ChatPage />
               </ProtectedRoute>
             }
           />
