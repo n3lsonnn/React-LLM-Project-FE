@@ -13,23 +13,17 @@ export default function DashboardPage() {
 
   // Load document list on mount
   useEffect(() => {
-    fetchDocuments()
-  }, [])
-
-  async function fetchDocuments() {
-    try {
-      const res = await api.get('/documents')
-      setDocuments(res.data)
-      // Resume polling for any non-terminal documents
-      res.data.forEach((doc) => {
-        if (doc.status === 'pending' || doc.status === 'processing') {
-          startPolling(doc.uuid)
-        }
+    api.get('/documents')
+      .then(res => {
+        setDocuments(res.data)
+        res.data.forEach(doc => {
+          if (doc.status === 'pending' || doc.status === 'processing') {
+            startPolling(doc.uuid)
+          }
+        })
       })
-    } catch {
-      setError('Failed to load documents.')
-    }
-  }
+      .catch(() => setError('Failed to load documents.'))
+  }, [])
 
   function startPolling(uuid) {
     // Avoid duplicate intervals
@@ -59,8 +53,9 @@ export default function DashboardPage() {
 
   // Clean up all intervals on unmount
   useEffect(() => {
+    const refs = pollingRefs.current
     return () => {
-      Object.values(pollingRefs.current).forEach(clearInterval)
+      Object.values(refs).forEach(clearInterval)
     }
   }, [])
 

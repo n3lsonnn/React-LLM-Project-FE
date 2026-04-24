@@ -81,7 +81,7 @@ export default function ChatPage() {
     api.get(`/documents/${uuid}`)
       .then(res => setDoc(res.data))
       .catch(() => navigate('/dashboard'))
-  }, [uuid])
+  }, [uuid, navigate])
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -94,6 +94,7 @@ export default function ChatPage() {
     const question = input.trim()
     setInput('')
     setStreaming(true)
+    setCitations([])
 
     const userMsgId = Date.now()
     const assistantMsgId = Date.now() + 1
@@ -120,24 +121,27 @@ export default function ChatPage() {
 
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
+      let buffer = ''
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        const text = decoder.decode(value, { stream: true })
-        const lines = text.split('\n')
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() // last entry may be incomplete — hold it for next read
 
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue
           const data = line.slice(6)
+          const trimmed = data.trim()
 
-          if (data === '[DONE]') break
+          if (!trimmed || trimmed === '[DONE]') continue
 
-          if (data.startsWith('[CITATIONS]')) {
+          if (trimmed.startsWith('[CITATIONS]')) {
             try {
-              setCitations(JSON.parse(data.slice(11)))
-            } catch { /* malformed citations — skip */ }
+              setCitations(JSON.parse(trimmed.slice(11)))
+            } catch { /* split across chunks — will arrive complete on next read */ }
             continue
           }
 
